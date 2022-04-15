@@ -25,7 +25,9 @@ fn main() {
 
     struct City<'a> {
         id: &'a str,
-        vector_of_neighbors: HashMap<&'a str, i32>
+        hashmap_of_neighbors: HashMap<&'a str, i32>,
+        neg_id_vec: Vec<&'a str>,
+        neg_dist_vec: Vec<i32>
     }
 
     let mut vector_of_cities: Vec<City> = Vec::new();
@@ -38,12 +40,19 @@ fn main() {
 
         let mut hashMap: HashMap<&str, i32> = HashMap::new();
 
+        let mut neighbor_id_vec: Vec<&str> = Vec::new();
+        let mut neighbor_dist_vec: Vec<i32> = Vec::new();
+
         let city_id = vector_of_splitted_city[0];
         vector_of_city_id.push(city_id);
 
         for t in (1..vector_of_splitted_city.len() - 1).step_by(2) {
             let neighbor_id = vector_of_splitted_city[t];
             let neighbor_distance: i32 = FromStr::from_str(vector_of_splitted_city[t+1]).unwrap();
+
+            neighbor_id_vec.push(neighbor_id);
+            neighbor_dist_vec.push(neighbor_distance);
+
             hashMap.insert(
                 neighbor_id,
                 neighbor_distance
@@ -52,25 +61,106 @@ fn main() {
 
         let city = City {
             id: vector_of_city_id[i-3],
-            vector_of_neighbors: hashMap
+            hashmap_of_neighbors: hashMap,
+            neg_id_vec: neighbor_id_vec,
+            neg_dist_vec: neighbor_dist_vec
         };
 
         vector_of_cities.push(city);
     }
 
-    println!("{:?}", vector_of_cities[4].vector_of_neighbors);
-    println!("{:?}", vector_of_cities[3].id);
-
     //city
-    struct Vertex {
-        distance: i32,
-        previous: Box<Vertex>
+    #[derive(Copy, Clone, Eq, PartialEq)]
+    struct State {
+        cost: usize,
+        position: usize,
+    }
+
+    impl Ord for State {
+        fn cmp(&self, other: &Self) -> Ordering {
+            other.cost.cmp(&self.cost).then_with(|| self.position.cmp(&other.position))
+        }
+    }
+
+    impl PartialOrd for State {
+        fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+            Some(self.cmp(other))
+        }
     }
 
     //road
     struct Edge {
+        node: usize,
+        cost: usize,
+    }    
 
+    fn shortest_path(adj_list: &Vec<Vec<Edge>>, start: usize, goal: usize) -> Option<usize> {
+        let mut dist: Vec<_> = (0..adj_list.len()).map(|_| usize::MAX).collect();
+
+        let mut heap = BinaryHeap::new();
+
+        dist[start] = 0;
+        heap.push(State {cost: 0, position: start});
+
+        while let Some(State { cost, position }) = heap.pop() {
+            if position == goal { return Some(cost); }
+
+            if cost > dist[position] {continue;}
+
+            for edge in &adj_list[position] {
+                let next = State { cost: cost + edge.cost, position: edge.node };
+
+                if next.cost < dist[next.position] {
+                    heap.push(next);
+                    dist[next.position] = next.cost;
+                }
+            }
+        }
+        None
     }
+
+    let mut graph = Vec::<Vec<Edge>>::new();
+
+    for i in 0..vector_of_cities.len() {
+        let city = &vector_of_cities[i];
+        let mut edges = Vec::<Edge>::new();
+
+        for t in 0..city.neg_id_vec.len() {
+            let nodest = city.neg_id_vec[t].chars().last().unwrap();
+            let node_u32 = nodest.to_digit(10).unwrap();
+            let node: usize = node_u32 as usize - 1;  //to usize
+            let costest = city.neg_dist_vec[t];
+            let cost: usize = costest as usize;
+            //to usize
+
+            let edge = Edge{
+                node: node,
+                cost: cost
+            };
+            edges.push(edge);
+        }
+
+        graph.push(edges);
+    }
+
+/*     for i in 0..vector_of_cities.len() {
+        println!("{:?}", vector_of_cities[i].id);
+        println!("{:?}", vector_of_cities[i].neg_id_vec);
+        println!("{:?}", vector_of_cities[i].neg_dist_vec);
+    } */
+
+    let start_node_s = city_of_mecnun.chars().last().unwrap();
+    let start_node_u = start_node_s.to_digit(10).unwrap();
+    let start_node: usize = start_node_u as usize - 1;
+
+    let target_node_s = city_of_leyla.chars().last().unwrap();
+    let target_node_u = target_node_s.to_digit(10).unwrap();
+    let target_node: usize = target_node_u as usize - 1;
+
+    
+
+    println!("Result: {:?}" ,shortest_path(&graph, start_node, target_node)); 
+
 }
 
 
