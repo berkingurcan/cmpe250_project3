@@ -74,6 +74,7 @@ fn main() {
     struct State {
         cost: usize,
         position: usize,
+        previous: usize
     }
 
     impl Ord for State {
@@ -96,23 +97,28 @@ fn main() {
 
     fn shortest_path(adj_list: &Vec<Vec<Edge>>, start: usize, goal: usize) -> Option<usize> {
         let mut dist: Vec<_> = (0..adj_list.len()).map(|_| usize::MAX).collect();
+        let mut prev: Vec<_> = (0..adj_list.len()).map(|_| usize::MAX).collect();
 
         let mut heap = BinaryHeap::new();
 
         dist[start] = 0;
-        heap.push(State {cost: 0, position: start});
+        heap.push(State {cost: 0, position: start, previous: 0});
 
-        while let Some(State { cost, position }) = heap.pop() {
-            if position == goal { return Some(cost); }
+        while let Some(State { cost, position, previous }) = heap.pop() {
+            if position == goal { 
+                println!("{:?}", prev);
+                return Some(cost); 
+            }
 
             if cost > dist[position] {continue;}
 
             for edge in &adj_list[position] {
-                let next = State { cost: cost + edge.cost, position: edge.node };
+                let next = State { cost: cost + edge.cost, position: edge.node, previous: position };
 
                 if next.cost < dist[next.position] {
                     heap.push(next);
                     dist[next.position] = next.cost;
+                    prev[position] = position;
                 }
             }
         }
@@ -120,27 +126,49 @@ fn main() {
     }
 
     let mut graph = Vec::<Vec<Edge>>::new();
+    let mut graph_honeymoon = Vec::<Vec<Edge>>::new();
 
-    for i in 0..vector_of_cities.len() {
+    let lenght_to_c = 7;
+
+    for i in 0..vector_of_cities.len(){
         let city = &vector_of_cities[i];
         let mut edges = Vec::<Edge>::new();
+        let mut edges_honeymoon = Vec::<Edge>::new();
+
 
         for t in 0..city.neg_id_vec.len() {
-            let nodest = city.neg_id_vec[t].chars().last().unwrap();
-            let node_u32 = nodest.to_digit(10).unwrap();
-            let node: usize = node_u32 as usize - 1;  //to usize
-            let costest = city.neg_dist_vec[t];
-            let cost: usize = costest as usize;
-            //to usize
+            let nodest = city.neg_id_vec[t];
+            if nodest.chars().nth(0).unwrap() != 'c' {
+                let nodesto = nodest.replace("d", "");
+                let node_u32: u32 = nodesto.parse().unwrap();
+                let node: usize = node_u32 as usize - 1;  //to usize
+                let costest = city.neg_dist_vec[t];
+                let cost: usize = costest as usize;
 
-            let edge = Edge{
-                node: node,
-                cost: cost
-            };
-            edges.push(edge);
+                let edge = Edge{
+                    node: node,
+                    cost: cost
+                };
+                edges_honeymoon.push(edge);
+            } else {
+                let nodesto = nodest.replace("c", "");
+                let node_u32: u32 = nodesto.parse().unwrap();
+                let node: usize = node_u32 as usize - 1;  //to usize
+                let costest = city.neg_dist_vec[t];
+                let cost: usize = costest as usize;
+                //to usize
+    
+                let edge = Edge{
+                    node: node,
+                    cost: cost
+                };
+                edges.push(edge);
+            }
         }
 
         graph.push(edges);
+        graph_honeymoon.push(edges_honeymoon);
+
     }
 
 /*     for i in 0..vector_of_cities.len() {
@@ -149,18 +177,26 @@ fn main() {
         println!("{:?}", vector_of_cities[i].neg_dist_vec);
     } */
 
-    let start_node_s = city_of_mecnun.chars().last().unwrap();
-    let start_node_u = start_node_s.to_digit(10).unwrap();
+    let mut start_node_s = city_of_mecnun.replace("c", "");
+    let start_node_u: u32 = start_node_s.trim().parse().unwrap();
     let start_node: usize = start_node_u as usize - 1;
 
-    let target_node_s = city_of_leyla.chars().last().unwrap();
-    let target_node_u = target_node_s.to_digit(10).unwrap();
+    let mut target_node_s = city_of_leyla.replace("c", "");
+    let target_node_u: u32 = target_node_s.trim().parse().unwrap();
     let target_node: usize = target_node_u as usize - 1;
 
-    
+    let mut int1 = 0;
 
-    println!("Result: {:?}" ,shortest_path(&graph, start_node, target_node)); 
+    if shortest_path(&graph, start_node, target_node).unwrap() > limit_of_father.try_into().unwrap() {
+        int1 = -1;
+    }else {
+        int1 = shortest_path(&graph, start_node, target_node).unwrap() as i32;
+    }
 
+    shortest_path(&graph, start_node, target_node);
+
+    println!("Result: {:?}" , shortest_path(&graph, start_node, target_node)); 
+    println!("Result: {:?}" , int1); 
 }
 
 
