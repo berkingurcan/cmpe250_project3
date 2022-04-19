@@ -97,12 +97,13 @@ fn main() {
 
     fn shortest_path(adj_list: &Vec<Vec<Edge>>, start: usize, goal: usize) -> Option<usize> {
         let mut dist: Vec<_> = (0..adj_list.len()).map(|_| usize::MAX).collect();
-        let mut prev: Vec<_> = (0..adj_list.len()).map(|_| usize::MAX).collect();
+        let mut prev: Vec<_> = (0..adj_list.len()).map(|_| usize::MIN).collect();
+        //let mut prevler = Vec::<_>::new();
 
         let mut heap = BinaryHeap::new();
 
         dist[start] = 0;
-        heap.push(State {cost: 0, position: start, previous: 0});
+        heap.push(State {cost: 0, position: start, previous: 1});
 
         while let Some(State { cost, position, previous }) = heap.pop() {
             if position == goal { 
@@ -113,12 +114,12 @@ fn main() {
             if cost > dist[position] {continue;}
 
             for edge in &adj_list[position] {
-                let next = State { cost: cost + edge.cost, position: edge.node, previous: position };
+                let next = State { cost: cost + edge.cost, position: edge.node, previous: position + 1 };
 
                 if next.cost < dist[next.position] {
                     heap.push(next);
                     dist[next.position] = next.cost;
-                    prev[position] = position;
+                    prev[position] = next.previous;
                 }
             }
         }
@@ -168,14 +169,7 @@ fn main() {
 
         graph.push(edges);
         graph_honeymoon.push(edges_honeymoon);
-
     }
-
-/*     for i in 0..vector_of_cities.len() {
-        println!("{:?}", vector_of_cities[i].id);
-        println!("{:?}", vector_of_cities[i].neg_id_vec);
-        println!("{:?}", vector_of_cities[i].neg_dist_vec);
-    } */
 
     let mut start_node_s = city_of_mecnun.replace("c", "");
     let start_node_u: u32 = start_node_s.trim().parse().unwrap();
