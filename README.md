@@ -1,4 +1,4 @@
-# cmpe250_project3
+# cmpe250_project3 (not complete yet)
 ## Bogazici University Computer Engineering Data Structures and Algorithms Course 3rd Project
 ### Dijkstra's Algorithm Implementation
 
